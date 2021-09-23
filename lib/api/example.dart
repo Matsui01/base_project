@@ -4,12 +4,11 @@ import 'package:logger/logger.dart';
 import 'package:dio/dio.dart' hide Headers;
 
 class Example {
-  final logger = Logger();
-  final RestClient restClient;
+  // final logger = Logger();
 
-  Example() : restClient = RestClient(Dio(BaseOptions(headers: {"Authorization": Authentication().token})));
+  // Example() : restClient = RestClient(Dio(BaseOptions(headers: {"Authorization": Authentication().token})));
 
   void request1() {
-    restClient.getJokes().then((it) => logger.i(it));
+    // restClient.getJokes().then((it) => logger.i(it));
   }
 }

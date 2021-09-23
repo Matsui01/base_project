@@ -1,52 +1,50 @@
-import 'package:base_project/models/joke.dart';
-import 'package:retrofit/retrofit.dart';
-import 'package:dio/dio.dart' hide Headers;
+import 'package:dio/dio.dart';
 
-part 'rest_client.g.dart';
+class RestClient {
+  void httpInit() async {
+    var options = BaseOptions(
+      baseUrl: 'https://www.xx.com/api',
+      connectTimeout: 5000,
+      receiveTimeout: 3000,
+    );
+    var dio = Dio(options); // with default Options
 
-@RestApi(baseUrl: "https://api.chucknorris.io/")
-abstract class RestClient {
-  factory RestClient(Dio dio, {String baseUrl}) = _RestClient;
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      // Do something before request is sent
+      return handler.next(options); //continue
+      // If you want to resolve the request with some custom data，
+      // you can resolve a `Response` object eg: return `dio.resolve(response)`.
+      // If you want to reject the request with a error message,
+      // you can reject a `DioError` object eg: return `dio.reject(dioError)`
+    }, onResponse: (response, handler) {
+      // Do something with response data
+      return handler.next(response); // continue
+      // If you want to reject the request with a error message,
+      // you can reject a `DioError` object eg: return `dio.reject(dioError)`
+    }, onError: (DioError e, handler) {
+      // Do something with response error
+      return handler.next(e); //continue
+      // If you want to resolve the request with some custom data，
+      // you can resolve a `Response` object eg: return `dio.resolve(response)`.
+    }));
+  }
 
-  @GET('/jokes/random')
-  Future<Joke> getJokes({@DioOptions() Options? options});
+  void getHttp1() async {
+    var dio = Dio();
+    Response response = await dio.get('/test?id=12&name=wendu');
+    response = await dio.get('/test', queryParameters: {'id': 12, 'name': 'wendu'});
+    print(response.data);
+  }
 
-  // HEADERS EXAMPLE
-  @GET("/jokes/random")
-  Future<Joke> getJokes1(@Header("Content-Type") String contentType);
-
-  // STATIC HEADERS EXAMPLE
-  @GET("/jokes/random")
-  @Headers(<String, dynamic>{"Content-Type": "application/json", "Custom-Header": "Your header"})
-  Future<Joke> getJasks2();
-
-  @GET("/jokes/{id}")
-  Future<Joke> getJoke(@Header("Content-Type") String contentType, @Path("id") String id);
-
-  @GET('/jokes')
-  Future<String> queries(@Queries() Map<String, dynamic> queries);
-
-  //AINDA NAO SEI PARA QUE SERVE ;-;
-  @GET("https://httpbin.org/get")
-  Future<String> namedExample(@Query("apikey") String apiKey, @Query("scope") String scope, @Query("type") String type, @Query("from") int from);
-
-  // @PATCH("/jokes/{id}")
-  // Future<Joke> updateJokePart(
-  //     @Path() String id, @Body() Map<String, dynamic> map);
-
-  // @PUT("/jokes/{id}")
-  // Future<Joke> updateJoke(@Path() String id, @Body() Joke Joke);
-
-  // @DELETE("/jokes/{id}")
-  // Future<void> deleteJoke(@Path() String id);
-
-  // @POST("/jokes")
-  // Future<Joke> createJoke(@Body() Joke Joke);
-
-  // @POST("http://httpbin.org/post")
-  // Future<void> createNewJokeFromFile(@Part() File file);
-
-  // @POST("http://httpbin.org/post")
-  // @FormUrlEncoded()
-  // Future<String> postUrlEncodedFormData(@Field() String hello);
+  void getHttp2() async {
+    var dio = Dio(); // with default Options
+    var response = await dio.request(
+      '/test',
+      data: {'id': 12, 'name': 'xx'},
+      options: Options(
+        method: 'GET',
+        responseType: ResponseType.json,
+      ),
+    );
+  }
 }
