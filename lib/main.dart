@@ -1,7 +1,9 @@
+import 'package:base_project/http.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  restClient.restClientInit();
+  // runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
