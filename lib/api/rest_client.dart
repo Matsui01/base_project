@@ -1,52 +1,49 @@
+import 'package:base_project/consts.dart';
 import 'package:dio/dio.dart';
 
 import '../http.dart';
+import '../paths.dart';
 
 class RestClient {
+  final int clientID = -1;
+  final String clientSecret = "";
+  final String refreshType = "";
+  final String passwordType = "";
+
   final String devUrl = "https://dev.api.atendimento.satturno.com.br";
   final String prodUrl = "https://api";
 
-  String accessToken = "";
-  String refreshToken = "";
+  String accessToken = "a ";
+  String refreshToken = " a";
   String authorizationType = "Bearer";
 
-  static int clientID = 3;
-  static String clientSecret = "EDX3Ct6xqaRl69WG79aRuHCyXuJ1VlOUy6wbkWlt";
-  static String refreshType = "refresh_token";
-  static String passwordType = "password";
-  // {"Content-type": "application/json", "Authorization": "access_token: Asgs~[3tdg5h`]/"};
+  /// [onRequets] É chamado antes do envio da requisição
+  /// Caso não haja um token, requisite o token e trave o interceptor para outras requisições
 
-  restClientInit() {
+  /// [onResponse] Resposta da requisição
+
+  /// [onError] Resposta com erro
+  /// Caso a resposta seja 401 executa o refresh token
+  /// trava todas as requisições
+  /// logo em seguida tenta a requisição novamente
+
+  void restClientInit() {
     BaseOptions baseOptions = BaseOptions(
       baseUrl: devUrl,
       connectTimeout: 10000,
       receiveTimeout: 8000,
-      headers: {
-        "Authorization": "$authorizationType $accessToken",
-      },
+      headers: {"Authorization": "$authorizationType $accessToken"},
     );
 
     BaseOptions tokenOptions = BaseOptions(
       baseUrl: devUrl,
       connectTimeout: 10000,
       receiveTimeout: 8000,
-      headers: {
-        // "Authorization": "$authorizationType $refreshToken",
-      },
+      headers: {},
     );
 
     dio = Dio(baseOptions);
     tokenDio = Dio(tokenOptions);
-
-    /// [onRequets] É chamado antes do envio da requisição
-    /// Caso não haja um token, requisite o token e trave o interceptor para outras requisições
-
-    /// [onResponse] Resposta da requisição
-
-    /// [onError] Resposta com erro
-    /// Caso a resposta seja 401 executa o refresh token
-    /// trava todas as requisições
-    /// logo em seguida tenta a requisição novamente
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
@@ -54,7 +51,7 @@ class RestClient {
         // Para prevenir que outra requisição entre em ação
         if (accessToken.isEmpty || refreshToken.isEmpty) {
           dio.interceptors.requestLock.lock();
-          tokenDio.get('/oauth/token').then((response) {
+          tokenDio.get(Paths.auth).then((response) {
             options.headers["Authorization"] = "$authorizationType $accessToken";
             tokenDio.options.headers["Authorization"] = "$authorizationType $refreshToken";
             handler.next(options);
@@ -65,6 +62,7 @@ class RestClient {
         return handler.next(options);
       },
       onResponse: (response, handler) {
+        logger.i("${response.requestOptions.path} ${response.statusCode}", response.data);
         return handler.next(response); // continue
       },
       onError: (DioError e, handler) {
@@ -89,7 +87,7 @@ class RestClient {
           dio.interceptors.errorLock.lock();
 
           // Refresh
-          tokenDio.post('/oauth/token', data: {
+          tokenDio.post(Paths.auth, data: {
             "client_id": clientID,
             "client_secret": clientSecret,
             "grant_type": refreshType,
@@ -112,6 +110,20 @@ class RestClient {
             );
           });
           return;
+        } else {
+          switch (e.response?.statusCode) {
+            case 500:
+              logger.e(
+                "${e.requestOptions.path} 500",
+                "Erro: ${e.message} ${e.response?.data}",
+              );
+              break;
+            default:
+              logger.w(
+                "${e.requestOptions.path} ${e.response?.statusCode} ",
+                "Erro: ${e.message} ${e.response?.data}",
+              );
+          }
         }
         return handler.next(e);
       },

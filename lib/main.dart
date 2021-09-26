@@ -1,8 +1,12 @@
 import 'package:base_project/http.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
+import 'consts.dart';
 
 void main() {
   restClient.restClientInit();
+
   // runApp(const MyApp());
 }
 
