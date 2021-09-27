@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:base_project/consts.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../http.dart';
 import '../paths.dart';
@@ -16,6 +19,14 @@ class RestClient {
   String accessToken = "a ";
   String refreshToken = " a";
   String authorizationType = "Bearer";
+
+  _parseAndDecode(String response) {
+    return jsonDecode(response);
+  }
+
+  parseJson(String text) {
+    return compute(_parseAndDecode, text);
+  }
 
   /// [onRequets] É chamado antes do envio da requisição
   /// Caso não haja um token, requisite o token e trave o interceptor para outras requisições
@@ -41,6 +52,7 @@ class RestClient {
       receiveTimeout: 8000,
       headers: {},
     );
+    (dio.transformer as DefaultTransformer).jsonDecodeCallback = parseJson;
 
     dio = Dio(baseOptions);
     tokenDio = Dio(tokenOptions);
@@ -62,7 +74,7 @@ class RestClient {
         return handler.next(options);
       },
       onResponse: (response, handler) {
-        logger.i("${response.requestOptions.path} ${response.statusCode}", response.data);
+        logger.i("${response.requestOptions.path} ${response.statusCode}\n${response.data}");
         return handler.next(response); // continue
       },
       onError: (DioError e, handler) {
@@ -114,14 +126,12 @@ class RestClient {
           switch (e.response?.statusCode) {
             case 500:
               logger.e(
-                "${e.requestOptions.path} 500",
-                "Erro: ${e.message} ${e.response?.data}",
+                "${e.requestOptions.path} 500 \nErro: ${e.message} ${e.response?.data}",
               );
               break;
             default:
               logger.w(
-                "${e.requestOptions.path} ${e.response?.statusCode} ",
-                "Erro: ${e.message} ${e.response?.data}",
+                "${e.requestOptions.path} ${e.response?.statusCode}\nErro: ${e.message} ${e.response?.data}",
               );
           }
         }

@@ -1,12 +1,16 @@
 import 'package:base_project/http.dart';
-import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'consts.dart';
+import 'models/joke.dart';
+
+// Must be top-level function
 
 void main() {
   restClient.restClientInit();
-
+  dio.get("https://api.chucknorris.io/jokes/random",).then((value) {
+    Joke joke = Joke.fromJson(value.data);
+  });
   // runApp(const MyApp());
 }
 
@@ -53,9 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
+            const Text('You have pushed the button this many times:'),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
